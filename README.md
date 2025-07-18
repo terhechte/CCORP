@@ -1,4 +1,4 @@
-# CCOR - Anthropic to OpenAI/OpenRouter Adapter
+# CCORP - Anthropic to OpenAI/OpenRouter Adapter
 
 This is a Rust application that acts as an adapter between the Anthropic API format and the OpenAI/OpenRouter API format. It spins up a webserver, receives requests in the Anthropic format, rewrites them to the OpenAI/OpenRouter format, sends them to OpenRouter, and streams the results back.
 
@@ -39,7 +39,7 @@ run claude code
 
 ## Logging
 
-CCOR can also log requests and responses to a specified directory. To enable this, pass the `--logging` flag followed by the path to the directory where you want the logs to be stored.
+CCORP can also log requests and responses to a specified directory. To enable this, pass the `--logging` flag followed by the path to the directory where you want the logs to be stored.
 
 For example, to log requests and responses to the `logs` directory, run the following command:
 
@@ -51,4 +51,4 @@ This will start the server and log requests and responses to the `logs` director
 
 ## License
 
-CCOR is licensed under the MIT License.
+CCORP is licensed under the MIT License.
