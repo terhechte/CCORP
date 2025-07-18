@@ -1,4 +1,4 @@
-# ccor - Anthropic to OpenAI/OpenRouter Adapter
+# CCOR - Anthropic to OpenAI/OpenRouter Adapter
 
 This is a Rust application that acts as an adapter between the Anthropic API format and the OpenAI/OpenRouter API format. It spins up a webserver, receives requests in the Anthropic format, rewrites them to the OpenAI/OpenRouter format, sends them to OpenRouter, and streams the results back.
 
@@ -12,10 +12,10 @@ This is a Rust application that acts as an adapter between the Anthropic API for
 2.  Add the following environment variables to the `.env` file:
 
     ```
-    OPENROUTER_API_KEY=your_openrouter_api_key
+    OPENROUTER_MODEL_HAIKU=mistralai/devstral-small # or another model
+    OPENROUTER_MODEL_SONNET=mistralai/devstral-small # or another model
+    OPENROUTER_MODEL_OPUS=mistralai/devstral-small # or another model
     ```
-
-    Replace `your_openrouter_api_key` with your actual OpenRouter API key.
 
 ## Running the Application
 
@@ -27,41 +27,28 @@ cargo run
 
 The server will start on `0.0.0.0:3000`.
 
-## Usage
+## Using Claude Code
 
-You can make requests to the server using `curl` or any other HTTP client. The endpoint is `/v1/messages`.
+Start the proxy according to the docs which will run it in localhost:3073
 
-Here's an example of a non-streaming request:
+export ANTHROPIC_BASE_URL=http://localhost:3073
 
-```bash
-curl -X POST http://localhost:3000/v1/messages \
--H "Content-Type: application/json" \
--H "x-api-key: your_openrouter_api_key" \
--d '{
-  "model": "anthropic/claude-3-haiku-20240307",
-  "messages": [
-    {
-      "role": "user",
-      "content": "Hello, world!"
-    }
-  ]
-}'
-```
+export ANTHROPIC_AUTH_TOKEN="your openrouter api key"
 
-Here's an example of a streaming request:
+run claude code
+
+## Logging
+
+CCOR can also log requests and responses to a specified directory. To enable this, pass the `--logging` flag followed by the path to the directory where you want the logs to be stored.
+
+For example, to log requests and responses to the `logs` directory, run the following command:
 
 ```bash
-curl -X POST http://localhost:3000/v1/messages \
--H "Content-Type: application/json" \
--H "x-api-key: your_openrouter_api_key" \
--d '{
-  "model": "anthropic/claude-3-haiku-20240307",
-  "messages": [
-    {
-      "role": "user",
-      "content": "Hello, world!"
-    }
-  ],
-  "stream": true
-}'
+cargo run --logging logs
 ```
+
+This will start the server and log requests and responses to the `logs` directory.
+
+## License
+
+CCOR is licensed under the MIT License.

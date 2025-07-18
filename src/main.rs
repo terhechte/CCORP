@@ -4,12 +4,12 @@ mod openai_to_anthropic;
 mod settings;
 
 use axum::{
+    Router,
     body::Body,
     extract::{Json, State},
-    http::{header, HeaderMap, StatusCode},
+    http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
     routing::post,
-    Router,
 };
 use futures_util::stream::StreamExt;
 use models::{AnthropicRequest, OpenAIStreamResponse};
@@ -56,8 +56,8 @@ async fn main() {
         .route("/v1/messages", post(messages_handler))
         .with_state((shared_settings, shared_logging_path));
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    println!("Listening on http://0.0.0.0:3000");
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3073").await.unwrap();
+    println!("Listening on http://0.0.0.0:3073");
     axum::serve(listener, app).await.unwrap();
 }
 
@@ -170,10 +170,7 @@ data: {}
             .unwrap()
     } else {
         let res = client
-            .post(format!(
-                "{}/chat/completions",
-                settings.openrouter_base_url
-            ))
+            .post(format!("{}/chat/completions", settings.openrouter_base_url))
             .bearer_auth(api_key)
             .json(&openai_request)
             .send()
@@ -185,7 +182,8 @@ data: {}
         }
 
         let openai_response: models::OpenAIResponse = res.json().await.unwrap();
-        let anthropic_response = openai_to_anthropic::format_openai_to_anthropic(openai_response.clone());
+        let anthropic_response =
+            openai_to_anthropic::format_openai_to_anthropic(openai_response.clone());
 
         if let Some(path) = logging_path.as_ref() {
             let timestamp = std::time::SystemTime::now()
