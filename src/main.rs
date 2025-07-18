@@ -24,10 +24,23 @@ async fn main() {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "example_sse=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "ccor=debug,tower_http=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+    let mut logging_path: Option<String> = None;
+    let args: Vec<String> = std::env::args().collect();
+    if let Some(index) = args.iter().position(|arg| arg == "--logging") {
+        if let Some(path) = args.get(index + 1) {
+            logging_path = Some(path.clone());
+            std::fs::create_dir_all(path).expect("Failed to create logging directory");
+            println!("Logging requests and responses to: {}", path);
+        } else {
+            eprintln!("--logging flag requires a path argument.");
+            std::process::exit(1);
+        }
+    }
 
     let settings = Settings::new().expect("Failed to load settings");
 
@@ -37,21 +50,33 @@ async fn main() {
     println!("- Opus: {}", settings.openrouter_model_opus);
 
     let shared_settings = Arc::new(settings);
+    let shared_logging_path = Arc::new(logging_path);
 
     let app = Router::new()
         .route("/v1/messages", post(messages_handler))
-        .with_state(shared_settings);
+        .with_state((shared_settings, shared_logging_path));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    println!("Listening on http://0.0.0.0:3000");
     axum::serve(listener, app).await.unwrap();
 }
 
 async fn messages_handler(
-    State(settings): State<Arc<Settings>>,
+    State((settings, logging_path)): State<(Arc<Settings>, Arc<Option<String>>)>,
     headers: HeaderMap,
     Json(payload): Json<AnthropicRequest>,
 ) -> impl IntoResponse {
     let openai_request = anthropic_to_openai::format_anthropic_to_openai(payload, &settings);
+
+    if let Some(path) = logging_path.as_ref() {
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
+        let request_path = format!("{}/{}-request.json", path, timestamp);
+        let request_json = serde_json::to_string_pretty(&openai_request).unwrap();
+        std::fs::write(request_path, request_json).expect("Failed to write request log");
+    }
     let client = Client::new();
     let api_key = headers
         .get("x-api-key")
@@ -83,8 +108,10 @@ async fn messages_handler(
 
             let mut stream = res.bytes_stream();
 
+            let mut full_response = String::new();
             while let Some(item) = stream.next().await {
                 let chunk = item.unwrap();
+                full_response.push_str(&String::from_utf8_lossy(&chunk));
                 let chunk_str = String::from_utf8_lossy(&chunk);
                 for line in chunk_str.split("
 
@@ -124,6 +151,15 @@ data: {}
 
 ", message_stop);
             yield Ok::<_, axum::Error>(sse_event.into_bytes());
+
+            if let Some(path) = logging_path.as_ref() {
+                let timestamp = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis();
+                let response_path = format!("{}/{}-response.json", path, timestamp);
+                std::fs::write(response_path, full_response).expect("Failed to write response log");
+            }
         };
 
         let body = Body::from_stream(stream);
@@ -148,8 +184,19 @@ data: {}
             return (res.status(), res.text().await.unwrap_or_default()).into_response();
         }
 
-        let openai_response = res.json().await.unwrap();
-        let anthropic_response = openai_to_anthropic::format_openai_to_anthropic(openai_response);
+        let openai_response: models::OpenAIResponse = res.json().await.unwrap();
+        let anthropic_response = openai_to_anthropic::format_openai_to_anthropic(openai_response.clone());
+
+        if let Some(path) = logging_path.as_ref() {
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_millis();
+            let response_path = format!("{}/{}-response.json", path, timestamp);
+            let response_json = serde_json::to_string_pretty(&anthropic_response).unwrap();
+            std::fs::write(response_path, response_json).expect("Failed to write response log");
+        }
+
         (StatusCode::OK, Json(anthropic_response)).into_response()
     }
 }

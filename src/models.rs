@@ -75,14 +75,14 @@ pub struct OpenAIRequest {
     pub tools: Option<Vec<serde_json::Value>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpenAIResponse {
     pub id: String,
     pub choices: Vec<OpenAIChoice>,
     pub model: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpenAIChoice {
     pub index: u32,
     pub message: OpenAIMessage,
