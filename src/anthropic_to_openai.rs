@@ -1,4 +1,3 @@
-
 use crate::models::*;
 use crate::settings::Settings;
 use serde_json::json;
@@ -10,8 +9,6 @@ pub fn map_model(anthropic_model: &str, settings: &Settings) -> String {
         settings.openrouter_model_sonnet.clone()
     } else if anthropic_model.contains("opus") {
         settings.openrouter_model_opus.clone()
-    } else if anthropic_model.contains('/') {
-        anthropic_model.to_string()
     } else {
         anthropic_model.to_string()
     }
@@ -43,7 +40,9 @@ pub fn format_anthropic_to_openai(req: AnthropicRequest, settings: &Settings) ->
                             openapi_messages.push(OpenAIMessage {
                                 role: "tool".to_string(),
                                 content: Some(content["content"].to_string()),
-                                tool_call_id: Some(content["tool_use_id"].as_str().unwrap_or("").to_string()),
+                                tool_call_id: Some(
+                                    content["tool_use_id"].as_str().unwrap_or("").to_string(),
+                                ),
                                 tool_calls: None,
                             });
                         }
@@ -111,9 +110,9 @@ pub fn format_anthropic_to_openai(req: AnthropicRequest, settings: &Settings) ->
                     json!({
                         "type": "function",
                         "function": {
-                            "name": t["name"], 
-                            "description": t["description"], 
-                            "parameters": t["input_schema"], 
+                            "name": t["name"],
+                            "description": t["description"],
+                            "parameters": t["input_schema"],
                         }
                     })
                 })

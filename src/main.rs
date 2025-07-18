@@ -81,7 +81,7 @@ async fn messages_handler(
     let api_key = headers
         .get("x-api-key")
         .and_then(|v| v.to_str().ok())
-        .unwrap_or(&settings.openrouter_api_key)
+        .expect("Please set the ANTHROPIC_AUTH_TOKEN to your OpenRouter Key")
         .to_string();
 
     if openai_request.stream.unwrap_or(false) {
@@ -116,8 +116,7 @@ async fn messages_handler(
                 for line in chunk_str.split("
 
 ") {
-                    if line.starts_with("data: ") {
-                        let data = &line[6..];
+                    if let Some(data) = line.strip_prefix("data: ") {
                         if data == "[DONE]" {
                             break;
                         }

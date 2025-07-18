@@ -2,9 +2,19 @@
 
 This is a Rust application that acts as an adapter between the Anthropic API format and the OpenAI/OpenRouter API format. It spins up a webserver, receives requests in the Anthropic format, rewrites them to the OpenAI/OpenRouter format, sends them to OpenRouter, and streams the results back.
 
-## Prerequisites
+## Installation via Cargo
+
+### Prerequisites
 
 - Rust and Cargo: [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install)
+
+```
+cargo install --git https://github.com/terhechte/CCORP --bin ccor
+```
+
+## Installation
+
+Download from the releases
 
 ## Configuration
 

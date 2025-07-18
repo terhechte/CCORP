@@ -1,11 +1,9 @@
-
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
     #[serde(default = "default_openrouter_base_url")]
     pub openrouter_base_url: String,
-    pub openrouter_api_key: String,
     pub openrouter_model_haiku: String,
     pub openrouter_model_sonnet: String,
     pub openrouter_model_opus: String,
