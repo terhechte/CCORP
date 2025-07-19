@@ -1,6 +1,4 @@
-
 use serde::{Deserialize, Serialize};
-
 
 // Anthropic API Structs
 
