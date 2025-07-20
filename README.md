@@ -1,6 +1,6 @@
 # CCORP - Anthropic to OpenAI/OpenRouter Adapter
 
-## Use Claude Code with any OpenRouter model.
+## Use Claude Code Cli with any OpenRouter model.
 
 CCORP (Claude Code OpenRouter Proxy) is a high-performance Rust application that acts as an adapter between the Anthropic API format and the OpenAI/OpenRouter API format. It provides a seamless bridge for applications expecting Anthropic's API to work with OpenRouter's extensive model collection.
 
@@ -19,6 +19,7 @@ CCORP (Claude Code OpenRouter Proxy) is a high-performance Rust application that
 ### Via Cargo
 
 #### Prerequisites
+
 - Rust and Cargo: [https://www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install)
 
 ```bash
@@ -28,6 +29,14 @@ cargo install --git https://github.com/terhechte/CCORP --bin ccor
 ### Via Releases
 
 Download the latest binary from the [releases page](https://github.com/terhechte/CCORP/releases).
+
+#### Note macOS Users:
+
+After downloading the binary you need to remove the gatekeeper quarantine attribute:
+
+```bash
+xattr -r -d com.apple.quarantine ccor
+```
 
 ## Configuration
 
@@ -47,9 +56,9 @@ Create a `config.json` file to configure the port and model mappings:
 {
   "port": 3000,
   "models": {
-    "haiku": "mistralai/mistral-7b-instruct",
-    "sonnet": "meta-llama/llama-3.2-90b-vision-instruct",
-    "opus": "openai/gpt-4o"
+    "haiku": "qwen/qwen-2.5-coder-32b-instruct",
+    "sonnet": "moonshotai/kimi-k2",
+    "opus": "deepseek/deepseek-r1"
   }
 }
 ```
@@ -99,6 +108,7 @@ CCORP is designed to work seamlessly with Anthropic's Claude Code CLI:
 CCORP includes a web interface for dynamically switching models without restarting the server.
 
 Visit `http://localhost:3000/switch-model` in your browser to:
+
 - View all available OpenRouter models
 - Change model mappings for Haiku, Sonnet, and Opus
 
