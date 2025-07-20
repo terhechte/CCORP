@@ -1,8 +1,8 @@
 {
   "port": 3332,
   "models": {
-    "haiku": "deepseek/claude-haiku",
-    "sonnet": "anthropic/claude-sonnet-4",
-    "opus": "anthropic/claude-opus-4"
+    "haiku": "qwen/qwen-2.5-coder-32b-instruct",
+    "sonnet": "moonshotai/kimi-k2",
+    "opus": "deepseek/deepseek-r1"
   }
 }

@@ -104,49 +104,6 @@ Visit `http://localhost:3000/switch-model` in your browser to:
 
 Changes are saved to `config.json` and take effect immediately.
 
-## API Usage Examples
-
-### Non-Streaming Request
-
-```bash
-curl -X POST http://localhost:3000/v1/messages \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your_openrouter_api_key" \
-  -d '{
-    "model": "claude-3-5-haiku-20241022",
-    "messages": [{"role": "user", "content": "Hello, world!"}]
-  }'
-```
-
-### Streaming Request
-
-```bash
-curl -X POST http://localhost:3000/v1/messages \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your_openrouter_api_key" \
-  -d '{
-    "model": "claude-3-5-sonnet-20241022",
-    "messages": [{"role": "user", "content": "Tell me a story"}],
-    "stream": true
-  }'
-```
-
-## Architecture
-
-CCORP is built with:
-- **Rust**: For high performance and memory safety
-- **Axum**: Modern async web framework
-- **Tokio**: Async runtime
-- **Minijinja**: Template engine for the web UI
-
-The request flow:
-1. Receive Anthropic-formatted request
-2. Map Claude model to configured OpenRouter model
-3. Transform request to OpenAI format
-4. Forward to OpenRouter
-5. Transform response back to Anthropic format
-6. Stream or return to client
-
 ## Development
 
 ### Building
