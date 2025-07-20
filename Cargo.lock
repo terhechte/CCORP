@@ -234,11 +234,9 @@ version = "0.1.0"
 dependencies = [
  "async-stream",
  "axum",
- "bytes",
  "config",
  "dotenvy",
  "futures-util",
- "hyper",
  "reqwest",
  "serde",
  "serde_json",

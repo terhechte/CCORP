@@ -35,7 +35,7 @@ async fn main() {
         if let Some(path) = args.get(index + 1) {
             logging_path = Some(path.clone());
             std::fs::create_dir_all(path).expect("Failed to create logging directory");
-            println!("Logging requests and responses to: {}", path);
+            println!("Logging requests and responses to: {path}");
         } else {
             eprintln!("--logging flag requires a path argument.");
             std::process::exit(1);
@@ -73,7 +73,7 @@ async fn messages_handler(
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_millis();
-        let request_path = format!("{}/{}-request.json", path, timestamp);
+        let request_path = format!("{path}/{timestamp}-request.json");
         let request_json = serde_json::to_string_pretty(&openai_request).unwrap();
         std::fs::write(request_path, request_json).expect("Failed to write request log");
     }
@@ -132,9 +132,9 @@ async fn messages_handler(
                                     }
                                 });
                                 let sse_event = format!("event: content_block_delta
-data: {}
+data: {anthropic_stream_event}
 
-", anthropic_stream_event);
+");
                                 yield Ok::<_, axum::Error>(sse_event.into_bytes());
                             }
                         }
@@ -146,9 +146,9 @@ data: {}
                 "type": "message_stop"
             });
             let sse_event = format!("event: message_stop
-data: {}
+data: {message_stop}
 
-", message_stop);
+");
             yield Ok::<_, axum::Error>(sse_event.into_bytes());
 
             if let Some(path) = logging_path.as_ref() {
@@ -156,7 +156,7 @@ data: {}
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap()
                     .as_millis();
-                let response_path = format!("{}/{}-response.json", path, timestamp);
+                let response_path = format!("{path}/{timestamp}-response.json");
                 std::fs::write(response_path, full_response).expect("Failed to write response log");
             }
         };
@@ -189,7 +189,7 @@ data: {}
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_millis();
-            let response_path = format!("{}/{}-response.json", path, timestamp);
+            let response_path = format!("{path}/{timestamp}-response.json");
             let response_json = serde_json::to_string_pretty(&anthropic_response).unwrap();
             std::fs::write(response_path, response_json).expect("Failed to write response log");
         }
