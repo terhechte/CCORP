@@ -14,7 +14,7 @@ CCORP (Claude Code OpenRouter Proxy) is a high-performance Rust application that
 
 ## Installation
 
-![asset/image.jpg](assets/image.jpg)
+![asset/image.jpg](assets/images.jpg)
 
 ### Via Cargo
 
