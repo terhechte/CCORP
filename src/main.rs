@@ -1,7 +1,9 @@
 mod anthropic_to_openai;
+mod config;
 mod models;
 mod openai_to_anthropic;
-mod settings;
+mod openrouter;
+mod switch_model;
 
 use axum::{
     Router,
@@ -9,15 +11,22 @@ use axum::{
     extract::{Json, State},
     http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
-    routing::post,
+    routing::{get, post},
 };
+use config::Config;
 use futures_util::stream::StreamExt;
 use models::{AnthropicRequest, OpenAIStreamResponse};
 use reqwest::Client;
 use serde_json::json;
-use settings::Settings;
 use std::sync::Arc;
+use tokio::sync::RwLock;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+#[derive(Clone)]
+pub struct AppState {
+    pub config: Arc<RwLock<Config>>,
+    pub logging_path: Arc<Option<String>>,
+}
 
 #[tokio::main]
 async fn main() {
@@ -42,33 +51,43 @@ async fn main() {
         }
     }
 
-    let settings = Settings::new().expect("Failed to load settings");
+    let settings = Config::from_env();
 
     println!("Using the following model mappings:");
-    println!("- Haiku: {}", settings.openrouter_model_haiku);
-    println!("- Sonnet: {}", settings.openrouter_model_sonnet);
-    println!("- Opus: {}", settings.openrouter_model_opus);
+    println!("- Haiku: {}", settings.model_haiku);
+    println!("- Sonnet: {}", settings.model_sonnet);
+    println!("- Opus: {}", settings.model_opus);
 
-    let shared_settings = Arc::new(settings);
-    let shared_logging_path = Arc::new(logging_path);
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], settings.port));
+
+    let state = AppState {
+        config: Arc::new(RwLock::new(settings)),
+        logging_path: Arc::new(logging_path),
+    };
 
     let app = Router::new()
         .route("/v1/messages", post(messages_handler))
-        .with_state((shared_settings, shared_logging_path));
+        .route(
+            "/switch-model",
+            get(switch_model::switch_model_get).post(switch_model::switch_model_post),
+        )
+        .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3073").await.unwrap();
-    println!("Listening on http://0.0.0.0:3073");
+    println!("listening on {addr}");
+
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
 async fn messages_handler(
-    State((settings, logging_path)): State<(Arc<Settings>, Arc<Option<String>>)>,
+    State(state): State<AppState>,
     headers: HeaderMap,
     Json(payload): Json<AnthropicRequest>,
 ) -> impl IntoResponse {
-    let openai_request = anthropic_to_openai::format_anthropic_to_openai(payload, &settings);
+    let settings_guard = state.config.read().await;
+    let openai_request = anthropic_to_openai::format_anthropic_to_openai(payload, &settings_guard);
 
-    if let Some(path) = logging_path.as_ref() {
+    if let Some(path) = state.logging_path.as_ref() {
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -85,12 +104,12 @@ async fn messages_handler(
         .to_string();
 
     if openai_request.stream.unwrap_or(false) {
-        let settings = settings.clone();
+        let base_url = settings_guard.base_url.clone();
+        drop(settings_guard);
         let stream = async_stream::stream! {
             let res = client
                 .post(format!(
-                    "{}/chat/completions",
-                    settings.openrouter_base_url
+                    "{base_url}/chat/completions",
                 ))
                 .bearer_auth(api_key)
                 .json(&openai_request)
@@ -151,7 +170,7 @@ data: {message_stop}
 ");
             yield Ok::<_, axum::Error>(sse_event.into_bytes());
 
-            if let Some(path) = logging_path.as_ref() {
+            if let Some(path) = state.logging_path.as_ref() {
                 let timestamp = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap()
@@ -169,7 +188,7 @@ data: {message_stop}
             .unwrap()
     } else {
         let res = client
-            .post(format!("{}/chat/completions", settings.openrouter_base_url))
+            .post(format!("{}/chat/completions", settings_guard.base_url))
             .bearer_auth(api_key)
             .json(&openai_request)
             .send()
@@ -184,7 +203,7 @@ data: {message_stop}
         let anthropic_response =
             openai_to_anthropic::format_openai_to_anthropic(openai_response.clone());
 
-        if let Some(path) = logging_path.as_ref() {
+        if let Some(path) = state.logging_path.as_ref() {
             let timestamp = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()

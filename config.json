@@ -1,0 +1,8 @@
+{
+  "port": 3332,
+  "models": {
+    "haiku": "deepseek/claude-haiku",
+    "sonnet": "anthropic/claude-sonnet-4",
+    "opus": "anthropic/claude-opus-4"
+  }
+}

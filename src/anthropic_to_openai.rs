@@ -1,20 +1,20 @@
+use crate::config::Config;
 use crate::models::*;
-use crate::settings::Settings;
 use serde_json::json;
 
-pub fn map_model(anthropic_model: &str, settings: &Settings) -> String {
+pub fn map_model(anthropic_model: &str, settings: &Config) -> String {
     if anthropic_model.contains("haiku") {
-        settings.openrouter_model_haiku.clone()
+        settings.model_haiku.clone()
     } else if anthropic_model.contains("sonnet") {
-        settings.openrouter_model_sonnet.clone()
+        settings.model_sonnet.clone()
     } else if anthropic_model.contains("opus") {
-        settings.openrouter_model_opus.clone()
+        settings.model_opus.clone()
     } else {
         anthropic_model.to_string()
     }
 }
 
-pub fn format_anthropic_to_openai(req: AnthropicRequest, settings: &Settings) -> OpenAIRequest {
+pub fn format_anthropic_to_openai(req: AnthropicRequest, settings: &Config) -> OpenAIRequest {
     let mut openapi_messages = Vec::new();
 
     if let Some(system) = req.system {
