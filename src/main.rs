@@ -109,8 +109,7 @@ async fn messages_handler(
         let stream = async_stream::stream! {
             let res = client
                 .post(format!(
-                    "{}/chat/completions",
-                    base_url
+                    "{base_url}/chat/completions",
                 ))
                 .bearer_auth(api_key)
                 .json(&openai_request)

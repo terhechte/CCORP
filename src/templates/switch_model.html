@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,14 +13,17 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
+
         h1 {
             color: #333;
             text-align: center;
         }
+
         .search-container {
             margin: 20px 0;
             text-align: center;
         }
+
         #searchInput {
             width: 300px;
             padding: 10px;
@@ -27,17 +31,20 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+
         .model-selector {
             background: white;
             border-radius: 8px;
             padding: 20px;
             margin: 20px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .model-selector h2 {
             margin-top: 0;
             color: #555;
         }
+
         .model-selector select {
             width: 100%;
             padding: 10px;
@@ -46,15 +53,18 @@
             border-radius: 4px;
             background-color: white;
         }
+
         .current-model {
             margin: 10px 0;
             color: #666;
             font-size: 14px;
         }
+
         .submit-container {
             text-align: center;
             margin-top: 30px;
         }
+
         button {
             background-color: #007bff;
             color: white;
@@ -64,9 +74,11 @@
             border-radius: 4px;
             cursor: pointer;
         }
+
         button:hover {
             background-color: #0056b3;
         }
+
         .message {
             padding: 15px;
             margin: 20px 0;
@@ -74,16 +86,19 @@
             text-align: center;
             display: none;
         }
+
         .success {
             background-color: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
+
         .error {
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
         .model-info {
             font-size: 12px;
             color: #888;
@@ -91,15 +106,12 @@
         }
     </style>
 </head>
+
 <body>
     <h1>OpenRouter Model Switcher</h1>
-    
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Search models..." onkeyup="filterModels()">
-    </div>
-    
+
     <div id="message" class="message"></div>
-    
+
     <form id="modelForm">
         <div class="model-selector">
             <h2>Claude 3.5 Haiku</h2>
@@ -109,7 +121,7 @@
             </select>
             <div class="model-info" id="haikuInfo"></div>
         </div>
-        
+
         <div class="model-selector">
             <h2>Claude Sonnet 4</h2>
             <div class="current-model">Current: <strong>{{ model_sonnet }}</strong></div>
@@ -118,7 +130,7 @@
             </select>
             <div class="model-info" id="sonnetInfo"></div>
         </div>
-        
+
         <div class="model-selector">
             <h2>Claude Opus 4</h2>
             <div class="current-model">Current: <strong>{{ model_opus }}</strong></div>
@@ -127,7 +139,7 @@
             </select>
             <div class="model-info" id="opusInfo"></div>
         </div>
-        
+
         <div class="submit-container">
             <button type="submit">Save Model Configuration</button>
         </div>
@@ -136,32 +148,39 @@
     <script>
         const models = {};
         let allModels = [];
-        
+
         function initializeModels() {
-            allModels.forEach(model => {
+            // Sort models alphabetically by their display name
+            const sortedModels = [...allModels].sort((a, b) => {
+                const nameA = (a.name || a.id).toLowerCase();
+                const nameB = (b.name || b.id).toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+
+            sortedModels.forEach(model => {
                 const option = `<option value="${model.id}">${model.name || model.id}</option>`;
                 document.getElementById('haikuSelect').innerHTML += option;
                 document.getElementById('sonnetSelect').innerHTML += option;
                 document.getElementById('opusSelect').innerHTML += option;
             });
-            
+
             // Set current values
             document.getElementById('haikuSelect').value = '{{ model_haiku }}';
             document.getElementById('sonnetSelect').value = '{{ model_sonnet }}';
             document.getElementById('opusSelect').value = '{{ model_opus }}';
-            
+
             // Update model info
             updateModelInfo('haikuSelect', 'haikuInfo');
             updateModelInfo('sonnetSelect', 'sonnetInfo');
             updateModelInfo('opusSelect', 'opusInfo');
         }
-        
+
         function updateModelInfo(selectId, infoId) {
             const select = document.getElementById(selectId);
             const modelId = select.value;
             const model = allModels.find(m => m.id === modelId);
             const infoDiv = document.getElementById(infoId);
-            
+
             if (model) {
                 let info = [];
                 if (model.context_length) info.push(`Context: ${model.context_length.toLocaleString()} tokens`);
@@ -172,37 +191,16 @@
                 infoDiv.textContent = '';
             }
         }
-        
-        function filterModels() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const selects = ['haikuSelect', 'sonnetSelect', 'opusSelect'];
-            
-            selects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                const currentValue = select.value;
-                const options = select.querySelectorAll('option');
-                
-                options.forEach((option, index) => {
-                    if (index === 0) return; // Skip the first "Select a model..." option
-                    
-                    const model = allModels.find(m => m.id === option.value);
-                    if (model) {
-                        const searchString = `${model.id} ${model.name || ''}`.toLowerCase();
-                        option.style.display = searchString.includes(searchTerm) ? '' : 'none';
-                    }
-                });
-            });
-        }
-        
+
         document.getElementById('modelForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const formData = {
                 haiku: document.getElementById('haikuSelect').value,
                 sonnet: document.getElementById('sonnetSelect').value,
                 opus: document.getElementById('opusSelect').value
             };
-            
+
             try {
                 const response = await fetch('/switch-model', {
                     method: 'POST',
@@ -211,7 +209,7 @@
                     },
                     body: JSON.stringify(formData)
                 });
-                
+
                 const messageDiv = document.getElementById('message');
                 if (response.ok) {
                     messageDiv.textContent = 'Model configuration saved successfully!';
@@ -221,7 +219,7 @@
                     messageDiv.className = 'message error';
                 }
                 messageDiv.style.display = 'block';
-                
+
                 setTimeout(() => {
                     messageDiv.style.display = 'none';
                 }, 5000);
@@ -233,15 +231,16 @@
                 messageDiv.style.display = 'block';
             }
         });
-        
+
         // Add change event listeners to update model info
         document.getElementById('haikuSelect').addEventListener('change', () => updateModelInfo('haikuSelect', 'haikuInfo'));
         document.getElementById('sonnetSelect').addEventListener('change', () => updateModelInfo('sonnetSelect', 'sonnetInfo'));
         document.getElementById('opusSelect').addEventListener('change', () => updateModelInfo('opusSelect', 'opusInfo'));
-        
+
         // Initialize with model data
         allModels = {{ models_json }};
         initializeModels();
     </script>
 </body>
+
 </html>
